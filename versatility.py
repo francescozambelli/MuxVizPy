@@ -92,4 +92,15 @@ def get_multi_auth_centrality(supra, layers, nodes):
     return centrality_vector
     
     
+def get_multi_Kcore_centrality(supra, layers, nodes):
+    #calculate centrality in each layer separately and then get the max per node
+    kcore_table = np.zeros([nodes,layers])
+    nodes_tensor = get_node_tensor_from_supra_adjacency(supra, layers, nodes)
 
+    for l in range(layers):
+      g_tmp = gt.Graph(directed=False)
+      g_tmp.add_edge_list(np.transpose(nodes_tensor[l].nonzero()))
+      kcore_table[:,l] = gt.topology.kcore_decomposition(g_tmp).get_array()
+
+    centrality_vector = np.min(kcore_table, axis=1)
+    return centrality_vector
