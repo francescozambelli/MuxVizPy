@@ -40,49 +40,50 @@ def get_multi_LIC(obj, obj_type="glist"):
     
 
 def get_multi_LVC(g_list, printt=True):
-  g_l = [gt.Graph(g) for g in g_list]
-  layers = len(g_l)
-  lvc = []
-  flag_nochange = False
+    g_l = [gt.Graph(g) for g in g_list]
+    layers = len(g_l)
+    lvc = None
+    flag_nochange = False
 
   #set node names, because we want to preserve labels while pruning later
-  for l in range(layers):
-    names = g_l[l].new_vertex_property("int", g_l[l].get_vertices())
-    g_l[l].vp["names"]=names
+    for l in range(layers):
+        names = g_l[l].new_vertex_property("int", g_l[l].get_vertices())
+        g_l[l].vp["names"]=names
 
 
-  iteration = 0
-  while len(lvc)==0 or not(flag_nochange):
-    iteration = iteration + 1
-    if printt: print(" LVC Iteration #", iteration, "...", "\n")
-    #calculate the intersection of LCCs
-    l = 1
-    lic = get_multi_LIC(g_l)
-
-    if len(lvc)==0:
-      lvc = lic
-      flag_nochange = False
-    else:
-      if len(lic) == len(lvc):
-        if (np.all(np.sort(lic) == np.sort(lvc))):
-          #stop the algorithm
-          flag_nochange = True
-          return np.array(g_l[0].vp["names"].get_array()[lvc])
-        else:
-          flag_nochange = False
+    iteration = 0
+    while (lvc is None) or not(flag_nochange):
+        iteration = iteration + 1
+        if printt: print(" LVC Iteration #", iteration, "...", "\n")
         
-      else:
-        flag_nochange = False
+        #calculate the intersection of LCCs
+        l = 1
+        lic = get_multi_LIC(g_l)
+
+        if lvc is None:
+            lvc = lic
+            flag_nochange = False
+        else:
+            if len(lic) == len(lvc):
+                if (np.all(np.sort(lic) == np.sort(lvc))):
+                    #stop the algorithm
+                    flag_nochange = True
+                    return np.array(g_l[0].vp["names"].get_array()[lvc])
+                else:
+                    flag_nochange = False
+        
+            else:
+                flag_nochange = False
 
     if not(flag_nochange):
-      #clear each layer from nodes not in the intersection
-      for l in range(layers):
-        d = np.delete(g_l[l].get_vertices(),lic)
-        if len(d)!=0:
-          g_l[l].remove_vertex(d)
-      lvc = lic
+    #clear each layer from nodes not in the intersection
+        for l in range(layers):
+            d = np.delete(g_l[l].get_vertices(),lic)
+            if len(d)!=0:
+                g_l[l].remove_vertex(d)
+        lvc = lic
 
-  return np.array(g_l[0].vp["names"].get_array()[lvc])
+    return np.array(g_l[0].vp["names"].get_array()[lvc])
 
 
 def get_connected_components(supra, layers, nodes):
@@ -199,3 +200,4 @@ def get_SP_similarity_matrix(supra, layers, nodes):
     frobenius_norm = 1-(frobenius_norm/np.max(frobenius_norm))
 
     return frobenius_norm
+
