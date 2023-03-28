@@ -3,7 +3,7 @@ import graph_tool as gt
 from .build import *
 from .versatility import *
 
-def get_percolation(g_list, layers, nodes, method = "pagerank"):
+def get_percolation(g_list, layers, nodes, method = "pagerank", intralink_strenght=1):
     tensor = get_node_tensor_from_network_list(g_list)
     g_agg = get_aggregate_network(tensor)
     
@@ -17,8 +17,8 @@ def get_percolation(g_list, layers, nodes, method = "pagerank"):
         order = np.argsort(gt.centrality.betweenness(g_agg)[0].get_array())
         
     if method =="multi_pagerank" or method == "multi_classical" or method=="multi_eigenvector":
-        layerTensor =build_layers_tensor(Layers=Layers,
-                                         OmegaParameter=1, 
+        layerTensor =build_layers_tensor(Layers=layers,
+                                         OmegaParameter=intralink_strenght, 
                                          MultisliceType="categorical")
 
         supra=build_supra_adjacency_matrix_from_edge_colored_matrices(nodes_tensor=tensor,
