@@ -26,13 +26,37 @@ def leading_eigenv_approx(A, max_iter=1000, tol=1e-6, cval=None):
         # Compute the change in x and check for convergence
         delta_x = np.linalg.norm(x_new - x)
         if delta_x < tol:
-            print("Reached convergence")
+            #print("Reached convergence")
             break
 
         # Update x for the next iteration
         x = x_new
 
     # Compute the dominant eigenvalue and eigenvector
+    eigenvalue = x.T@A@x + (np.ones(x.shape)*x.sum()*cval).T @ x
+    eigenvector = x
+    
+    return [eigenvalue, eigenvector]
+
+def katz_eigenvalue_approx(A, alpha=0, max_iter=1000, tol=1e-6):
+    _, k1 = leading_eigenv_approx(A, cval=0)
+    if alpha==0:
+        alpha = 1/k1
+        alpha = alpha-(0.00001*alpha)
+    else:
+        if alpha>1/k1:
+            print("Warning: alpha>1/k1")
+    
+    x = np.random.randn(A.shape[0])
+    for i in range(max_iter):
+        xnew = alpha* A@x + np.ones(A.shape[0])
+        # Compute the change in x and check for convergence
+        delta_x = np.linalg.norm(x_new - x)
+        if delta_x < tol:
+            print("Reached convergence")
+            break
+        # Update x for the next iteration
+        x = x_new
     eigenvalue = x.T@A@x + (np.ones(x.shape)*x.sum()*cval).T @ x
     eigenvector = x
     
