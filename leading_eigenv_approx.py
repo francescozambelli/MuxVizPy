@@ -15,6 +15,8 @@ def leading_eigenv_approx(A, max_iter=1000, tol=1e-6, cval=None):
     x = np.random.rand(n)
     if cval==None:
     	cval = (1-0.85)/(n)
+    else:
+        cval = cval/n
     # Iterate until convergence
     for i in range(max_iter):
         # Compute y = (A + C) x
