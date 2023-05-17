@@ -183,3 +183,45 @@ def build_supra_adjacency_matrix_from_extended_edgelist(dfEdges, Layers, Nodes, 
         M = (M + M.T) / 2
     
     return M.T
+
+
+def create_supra_transition_matrix_virus(supra, node_tensor, nodes, layers, p_intra = 1):
+    
+    supra_sum = np.array(supra.sum(axis=0).tolist()[0])
+    supra_nonz = supra.nonzero()
+    
+    blocks = []
+    norms=[]
+
+    #create the non_diagonal blocks: the diagonal entries are the number of non non-itrelayer connections of the nodes he can reach
+    for l in range(layers):
+        # i subtract (layers-1) to delete the contributions of the interlayer connections given by the categorical coupling
+        block = sps.identity(nodes).multiply(supra_sum[l*nodes:(l+1)*nodes]-(layers-1))
+        blocks.append(block)
+    
+    #the blocks are combined together and the rows are normalized to create a transition matrix without diagonal blocks
+    mat =[]
+    for la in range(layers):
+        norm_fac = np.sum(supra_sum.reshape(layers, nodes)[np.delete(np.arange(layers),la)]-(layers-1), axis=0)
+        norm_fac = np.where(norm_fac != 0, 1 / norm_fac, 0)
+        mat.append([blocks[i].multiply(norm_fac) for i in np.delete(np.arange(layers), la)])
+    
+    #creating diagonal blocks by applying the standard prodecure for trans matr to each adj matrix
+    diag_blocks = []
+    for la in range(layers):
+        t0_sum = np.array(list(node_tensor[la].sum(axis=0)))[0][0]
+        t0_sum = np.where(t0_sum != 0, 1 / t0_sum, 0)
+
+        diag_blocks.append(node_tensor[la].dot(sps.diags(t0_sum)).T)
+    
+    #combine the results in the unnormalized final matrix
+    #the sum of each row can be 2, if there are contribution both from intra e inter connections, 1 for only intra, and 0 for nodes that becomes disconnected
+    #if I want to give an exctra contribution to the intra connections, i should choose p_intra>1
+    for i in range(layers):
+        mat[i].insert(i, diag_blocks[i].multiply(np.array([p_intra]*nodes)))
+
+    comb_mat =sps.vstack([sps.hstack(mat[i]) for i in range(layers)])
+    
+    valss = np.where(comb_mat.sum(axis=1) != 0, 1 / comb_mat.sum(axis=1), 0).flatten()
+
+    return comb_mat.T.multiply(valss).T

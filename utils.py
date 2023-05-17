@@ -15,3 +15,14 @@ def readComponent(fname):
         else:
             var.append(np.array(list(map(int,read_list[i][:-1].split(" ")))))
     return var
+
+def get_names(nodes_list, net):
+    '''
+    function to return the names of the nodes corresponding to a list of nodes index associated to
+    a network from a VirusMultiplex object
+    node_list = list of numbers associated to node IDs in the net
+    net = VirusMultiplex object
+    '''
+
+    keys = np.array(list(net.node_map.keys()))
+    return keys[nodes_list]

@@ -50,7 +50,34 @@ def get_multi_RW_centrality(supra, layers, nodes, Type = "classical", multilayer
 
     return np.real(centrality_vector)
     
-    
+def get_multi_RW_centrality_edge_colored(node_tensor, cval=0.15):
+    nodes = node_tensor[0].shape[0]
+    layers = len(node_tensor)
+    #create a supra adjacency matrix without interlayer connections
+    supra = build_supra_adjacency_matrix_from_edge_colored_matrices(nodes_tensor=node_tensor,
+                                                                    layer_tensor=np.zeros([layers,layers]),
+                                                                    layers=layers,
+                                                                    nodes=nodes)
+    #compute the degree for each replica node
+    supra_strength = supra.sum(axis=1).flatten()
+    #take the inverse to normalize the probabilities
+    supra_strength[0,np.array(supra_strength>0)[0]] = 1. / supra_strength[0,np.array(supra_strength>0)[0]]
+    #create a diagonal matrix to be able to multiply such a vector in a matrix multiplication fashion
+    supra_strength = sps.diags(np.array(supra_strength)[0])
+    #create super transition matrix
+    supra_transition = supra_strength.dot(supra)
+    #check witch replica nodes have degree > 0
+    nonzero_idx = np.where(np.logical_not(supra_transition.sum(axis=0)==0))[1]
+    #remove the corresponding zero rows and columns from the matrix
+    supra_transition = supra_transition[nonzero_idx]
+    supra_transition = supra_transition[:,nonzero_idx]
+    #compute the leading eigenvector with the approximation methos
+    eig,pr_v = leading_eigenv_approx(supra_transition.T, max_iter=10000, tol=1e-8, cval=0.15)
+    #aggregate by summing together probabilities corresponding to the same physical node to have the final result
+    res_df = pd.DataFrame({"phy nodes": nonzero_idx-((nonzero_idx//nodes)*nodes), "vers": pr_v/max(pr_v)})
+
+    return res_df.groupby("phy nodes").aggregate(sum).reset_index()
+
 def get_multi_hub_centrality(supra, layers, nodes):
     #build the A A'
     supra_mat = supra*supra.T
