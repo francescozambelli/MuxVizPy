@@ -175,8 +175,9 @@ def build_supra_adjacency_matrix_from_extended_edgelist(dfEdges, Layers, Nodes, 
     
     M = sps.coo_matrix((list(edges["weight"]), zip(*list(edges[["from","to"]].to_numpy()))), shape=(Nodes*Layers, Nodes*Layers))
     
-    M = M+M.T
     
+    if isDirected==False:
+        M = M+M.T
 
     if abs((M - M.T).sum()) > 1e-12 and isDirected == False:
         raise ValueError("WARNING: The input data is directed but isDirected=FALSE, I am symmetrizing by average.")

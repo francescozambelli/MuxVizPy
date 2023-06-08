@@ -52,38 +52,33 @@ def get_multi_LVC(g_list, printt=True):
 
 
     iteration = 0
-    while (lvc is None) or not(flag_nochange):
+    while True:
         iteration = iteration + 1
         if printt: print(" LVC Iteration #", iteration, "...", "\n")
         
         #calculate the intersection of LCCs
-        l = 1
+        #print(g_l[0].num_vertices())
         lic = get_multi_LIC(g_l)
-
-        if lvc is None:
-            lvc = lic
-            flag_nochange = False
-        else:
-            if len(lic) == len(lvc):
-                if (np.all(np.sort(lic) == np.sort(lvc))):
-                    #stop the algorithm
-                    flag_nochange = True
-                    return np.array(g_l[0].vp["names"].get_array()[lvc])
-                else:
-                    flag_nochange = False
         
-            else:
+        if len(lic)==0:
+            return []
+        else:
+            if lvc is None:
+                lvc = lic
                 flag_nochange = False
+            else:
+                if len(lic) == len(lvc):
+                    if (np.all(np.sort(lic) == np.sort(lvc))):
+                        #stop the algorithm
+                        return np.array(g_l[0].vp["names"].get_array()[lvc])
 
-    if not(flag_nochange):
-    #clear each layer from nodes not in the intersection
-        for l in range(layers):
-            d = np.delete(g_l[l].get_vertices(),lic)
-            if len(d)!=0:
+        #clear each layer from nodes not in the intersection
+        d = np.delete(g_l[l].get_vertices(),lic)
+        #print(d)
+        if len(d)!=0:
+            for l in range(layers):
                 g_l[l].remove_vertex(d)
         lvc = lic
-
-    return np.array(g_l[0].vp["names"].get_array()[lvc])
 
 
 def get_connected_components(supra, layers, nodes):
